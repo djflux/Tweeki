@@ -85,8 +85,8 @@ jQuery( function( $ ) {
 	 * links directly above the headline to be accessible
 	 */
 	$( '.mw-headline' ).each(function( i ) {
-		$headline_text = $( this ).text();
-		$(this).text('').after($headline_text);
+		$headline_contents = $( this ).contents();
+		$(this).text('').after($headline_contents);
 	});
 
 
@@ -134,3 +134,23 @@ jQuery( function( $ ) {
                  }
               });
 	});
+
+        /**
+         * This code along with animatescroll.js and some CSS changes to #tweekiTOC
+         * will automatically scroll pages that have long tables of contents.
+         *
+         * animatescroll is available here: 
+         *
+         *   https://plugins.compzets.com/animatescroll/
+         *   https://github.com/rampatra/animatescroll.js
+         *
+         * The following code comes from an example here:
+         *
+         *   http://blog.bigbasti.com/handling-too-long-scrollspy-menus/
+         *
+         **/
+        $('#tweekiTOC').on('activate.bs.scrollspy', function () {
+                item = $('#tweekiTOC').find(".active").last();
+                item.animatescroll({element: '#tweekiTOC', padding:20});
+        });
+        

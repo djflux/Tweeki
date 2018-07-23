@@ -98,6 +98,7 @@
 		"skins.tweeki.scripts": {
 			"position": "bottom",
 			"scripts": [
+				"animatescroll.js",
 				"tweeki.js"
 			],
 			"dependencies": [
