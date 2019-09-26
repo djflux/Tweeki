@@ -42,9 +42,46 @@ class TweekiHooks {
 		}
 
 		$parser->setFunctionHook( 'tweekihide', 'TweekiHooks::setHiddenElements' );
+		$parser->setFunctionHook( 'tweekihideexcept', 'TweekiHooks::setHiddenElementsGroups' );
 		$parser->setFunctionHook( 'tweekibodyclass', 'TweekiHooks::addBodyclass' );
 
 		return true;
+	}
+
+	/**
+	 * Manipulate headlines – we need .mw-headline to be empty because it has a padding
+	 * that we need for correct positioning for anchors and this would render links above headlines inaccessible
+	 */
+	public static function onOutputPageBeforeHTML( &$out, &$text ) {
+		// Manipulation is harmful when executed on non-article pages (e.g. stops preview from working)
+		if( $out->isArticle() ) {
+			$doc = new DOMDocument();
+			$html = mb_convert_encoding( $text, 'HTML-ENTITIES', 'UTF-8' );
+			if( $html != '' ) {
+				libxml_use_internal_errors(true);
+				$doc->loadHTML( $html );
+				libxml_clear_errors();
+				$spans = $doc->getElementsByTagName('span');
+				foreach( $spans as $span ) {
+					$mw_headline = '';
+					if( $span->getAttribute('class') == 'mw-headline' ) {
+						$mw_headline = $span;
+
+						/* move the contents of .mw-headline to a newly created .mw-headline-content */
+						$mw_headline_content = $doc->createElement("span");
+						$mw_headline_content->setAttribute( 'class', 'mw-headline-content' );
+						while( $mw_headline->firstChild ) {
+							$mw_headline_content->appendChild( $mw_headline->removeChild( $mw_headline->firstChild ) );
+						}
+
+						/* put .mw-headline before .mw-headline-content */
+						$mw_headline->parentNode->insertBefore( $mw_headline_content, $mw_headline );
+						$mw_headline->parentNode->insertBefore( $mw_headline, $mw_headline_content );
+						}
+					}
+				$text = $doc->saveHTML($doc->documentElement->firstChild->firstChild);
+			}
+		}
 	}
 	
 	/**
@@ -89,21 +126,21 @@ class TweekiHooks {
 	 * Enable TOC
 	 */
 	static function TOC( $input, array $args, Parser $parser, PPFrame $frame ) {
-		return array( '<div class="tweeki-toc">' . $input . '</div>' );
+		return array( '<div class="tweeki-toc">' . $parser->recursiveTagParse( $input ) . '</div>' );
 	}
 
 	/**
 	 * Enable use of <legend> tag
 	 */
 	static function legend( $input, array $args, Parser $parser, PPFrame $frame ) {
-		return array( '<legend>' . $input . '</legend>', "markerType" => 'nowiki' );
+		return array( '<legend>' . $parser->recursiveTagParse( $input ) . '</legend>', "markerType" => 'nowiki' );
 	}
 
 	/**
 	 * Enable use of <footer> tag
 	 */
 	static function footer( $input, array $args, Parser $parser, PPFrame $frame ) {
-		return array( '<footer>' . $input . '</footer>', "markerType" => 'nowiki' );
+		return array( '<footer>' . $parser->recursiveTagParse( $input ) . '</footer>', "markerType" => 'nowiki' );
 	}
 
 	/**
@@ -115,10 +152,30 @@ class TweekiHooks {
 	static function setHiddenElements( Parser $parser ) {
 		global $wgTweekiSkinHideAll, $wgTweekiSkinHideable;
 		$parser->disableCache();
-		// Argument 0 is $parser, so begin iterating at 1
 		for ( $i = 1; $i < func_num_args(); $i++ ) {
 			if ( in_array ( func_get_arg( $i ), $wgTweekiSkinHideable ) ) {
 				$wgTweekiSkinHideAll[] = func_get_arg( $i );
+			}
+		}
+		return '';
+	}
+
+	/**
+	 * Set elements that should be hidden except for specific groups
+	 *
+	 * @param $parser Parser current parser
+	 * @return string
+	 */
+	static function setHiddenElementsGroups( Parser $parser ) {
+		global $wgTweekiSkinHideAll, $wgTweekiSkinHideable;
+		$parser->disableCache();
+		$groups_except = explode( ',', func_get_arg( 1 ) );
+		$groups_user = $parser->getUser()->getEffectiveGroups();
+		if( count( array_intersect( $groups_except, $groups_user ) ) == 0 ) {
+			for ( $i = 2; $i < func_num_args(); $i++ ) {
+				if ( in_array ( func_get_arg( $i ), $wgTweekiSkinHideable ) ) {
+					$wgTweekiSkinHideAll[] = func_get_arg( $i );
+				}
 			}
 		}
 		return '';
@@ -160,7 +217,7 @@ class TweekiHooks {
 						</a>
 					</h4>
 				</div>
-				<div id="' . $parent . static::$anchorID . '" class="panel-collapse collapse">
+				<div id="' . $parent . static::$anchorID . '" class="panel-collapse collapse ' . ( isset( $args['class'] ) ? htmlentities( $args['class'] ) : '' ) . '">
 					<div class="panel-body">
 			' . $parser->recursiveTagParse( $input, $frame ) . '
 					</div>
@@ -297,7 +354,7 @@ class TweekiHooks {
 				if ( !is_numeric( $semanticHitNumber ) || $semanticHitNumber < 1 ) {
 					return array( array( 'text' => $semanticQuery, 'href' => 'INVALID QUERY' ) );
 				}
-				$semanticHits = $parser->recursiveTagParse( '{{#ask:' . $semanticQuery . '|format=list|link=none}}', false );
+				$semanticHits = $parser->recursiveTagParse( '{{#ask:' . $semanticQuery . '|link=none}}', false );
 				$semanticHits = explode( ',', $semanticHits );
 				$semanticLinks = array();
 				foreach ( $semanticHits as $semanticHit ) {
@@ -477,6 +534,11 @@ class TweekiHooks {
 				$button['data-placement'] = $options['data-placement'];
 			}
 				
+			// if data-slide attribute is set, add it
+			if ( isset( $options['data-slide'] ) ) {
+				$button['data-slide'] = $options['data-slide'];
+			}
+
 			// if title attribute is set, add it
 			if ( isset( $options['title'] ) ) {
 				$button['title'] = $options['title'];
