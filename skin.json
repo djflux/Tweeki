@@ -1,15 +1,23 @@
 {
 	"name": "Tweeki",
-	"version": "1.0.4",
-	"author": "Tobias Haider, Garrett LeSage",
-	"url": "http://tweeki.thai-land.at",
-	"descriptionmsg": "tweeki-desc",
+	"version": "1.1.0",
+	"author": "Tobias Haider",
+	"url": "https://tweeki.thai-land.at",
+	"descriptionmsg": "tweeki-skin-desc",
+	"namemsg": "skinname-tweeki",
+	"license-name": "GPL-2.0-or-later",
 	"type": "skin",
+	"requires": {
+		"MediaWiki": ">= 1.29.0"
+	},
+	"ConfigRegistry": {
+		"tweeki": "GlobalVarConfig::newInstance"
+	},
 	"ValidSkinNames": {
 		"tweeki": "Tweeki"
 	},
 	"MessagesDirs": {
-		"SkinTweeki": [
+		"Tweeki": [
 			"i18n"
 		]
 	},
@@ -17,8 +25,19 @@
 		"TweekiMagic": "Tweeki.i18n.magic.php"
 	},
 	"AutoloadClasses": {
-		"SkinTweeki": "Tweeki.skin.php",
-		"TweekiHooks": "Tweeki.hooks.php"
+		"TweekiHooks": "includes/Hooks.php",
+		"SkinTweeki": "includes/SkinTweeki.php",
+		"TweekiTemplate": "includes/TweekiTemplate.php"
+	},
+	"Hooks": {
+		"GetPreferences": "TweekiHooks::onGetPreferences",
+		"ParserFirstCallInit": "TweekiHooks::onParserFirstCallInit",
+		"SkinEditSectionLinks": "TweekiHooks::onSkinEditSectionLinks",
+		"AfterFinalPageOutput": "TweekiHooks::onAfterFinalPageOutput",
+		"MagicWordMagicWords": "TweekiHooks::onMagicWordMagicWords",
+		"MagicWordwgVariableIDs": "TweekiHooks::onMagicWordwgVariableIDs",
+		"InternalParseBeforeLinks": "TweekiHooks::onInternalParseBeforeLinks",
+		"OutputPageBeforeHTML": "TweekiHooks::onOutputPageBeforeHTML"
 	},
 	"ResourceModules": {
 		"skins.tweeki.bootstrap.styles": {
@@ -64,7 +83,7 @@
 		"skins.tweeki.awesome.styles": {
 			"position": "top",
 			"styles": {
-				"awesome/css/font-awesome.min.css": []
+				"awesome/css/all.min.css": []
 			}
 		},
 		"skins.tweeki.bootstraptheme.styles": {
@@ -122,15 +141,6 @@
 		"localBasePath": "",
 		"remoteSkinPath": "Tweeki"
 	},
-	"Hooks": {
-		"GetPreferences": "TweekiHooks::onGetPreferences",
-		"ParserFirstCallInit": "TweekiHooks::onParserFirstCallInit",
-		"SkinEditSectionLinks": "TweekiHooks::onSkinEditSectionLinks",
-		"AfterFinalPageOutput": "TweekiHooks::onAfterFinalPageOutput",
-		"MagicWordMagicWords": "TweekiHooks::onMagicWordMagicWords",
-		"MagicWordwgVariableIDs": "TweekiHooks::onMagicWordwgVariableIDs",
-		"InternalParseBeforeLinks": "TweekiHooks::onInternalParseBeforeLinks"
-	},
 	"config": {
 		"TweekiSkinHideAll": {
 			"footer-info": true
@@ -168,11 +178,14 @@
 		],
 		"TweekiSkinUseAwesome": true,
 		"TweekiSkinUseBootstrapTheme": true,
+		"TweekiSkinUseBootstrap4": false,
 		"TweekiSkinUseBtnParser": true,
 		"TweekiSkinUseScrollSpy": true,
 		"TweekiSkinUseTooltips": false,
+		"TweekiSkinUseIconWatch": false,
 		"TweekiSkinCustomEditSectionLink": true,
 		"TweekiSkinCustomCSS": [],
+		"TweekiSkinUseCustomFiles": false,
 		"TweekiSkinCustomizedBootstrap": null,
 		"TweekiSkinImagePageTOCTabs": false,
 		"TweekiSkinGridNone": { 
